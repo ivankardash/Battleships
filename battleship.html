@@ -42,17 +42,52 @@
 				border-color: rgb(83,175,19);
 				font-size: 1em;
 			}
+			.msgArea{
+				position: absolute;
+			}
 			.hit{
 				background: url("ship.png") no-repeat center center;
 			}
 			.miss{
 				background: url("miss.png") no-repeat center center;
 			}
+			.tn-box {
+ 				width: 300px;
+ 				right: 150px;
+ 				position: relative;
+ 				margin: 0 auto 20px auto;
+ 				padding: 25px 15px;
+ 				text-align: left;
+ 				box-shadow:  0 1px 1px rgba(0,0,0,0.1),
+ 				inset 0 1px 0 rgba(255,255,255,0.6);
+ 				opacity: 0;
+ 				cursor: default;
+ 				display: none;
+			} 
+			.tn-box-color-1{
+				background: rgb(152,207,113);
+				border-color: rgb(83,175,19);
+				font-size: 1em;
+ 				border: 1px solid rgb(83,175,19);
+			}
+			.tn-box.tn-box-active {
+				display: block;
+				animation: fadeOut 2s linear forwards;
+			}
+			@keyframes fadeOut {
+				0%  { opacity: 0; }
+ 				10% { opacity: 1; }
+ 				90% { opacity: 1; transform: translateY(0px);}
+				99% { opacity: 0; transform: translateY(-30px);}
+ 				100% { opacity: 0; }
+			}
 		</style>
 	</head>
 	<body>
 		<div id = "board">
-		<div id = "messageArea"></div>
+		<div id = "msgArea" class="msgArea" >
+		</div>
+		<!--><div id = "messageArea"></div><!-->
 			<table>	
 				<tr>
 					<td id ="00" ></td><td id ="01"></td><td id ="02"></td><td id ="03"></td><td id ="04"></td><td id ="05"></td><td id ="06"></td>

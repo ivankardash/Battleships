@@ -1,7 +1,22 @@
-	var view = {
+var view = {
+	msgCounter: null,
+//	messageBlock: [],
 	displayMessage: function(msg){
-		var messageArea = document.getElementById("messageArea");
-		messageArea.innerHTML = msg;
+		var index = this.msgCounter.getCount();
+		var newMessageBlock = document.createElement("div");
+		newMessageBlock.setAttribute("id","msg" + index);
+		newMessageBlock.setAttribute("class","tn-box tn-box-color-1 tn-box-active");
+		newMessageBlock.innerHTML = "<p>" + msg + "</p>";
+
+		var msgArea = document.getElementById("msgArea");
+		msgArea.appendChild(newMessageBlock);
+		this.msgCounter.increment();
+		
+		setTimeout(function(){
+			msgArea.removeChild(newMessageBlock);
+			view.msgCounter.decremrnt();
+		},2000)
+
 	},
 	displayHit: function(location){
 		var neededCell = document.getElementById(location);
@@ -10,6 +25,21 @@
 	displayMiss: function(location){
 		var neededCell = document.getElementById(location);
 		neededCell.setAttribute("class", "miss");
+	},
+	makeCounter: function(){
+		var count = 0;
+		return {
+			increment: function(){
+				count++;
+				return count;
+			},
+			getCount: function(){
+				return count;
+			},
+			decremrnt: function(){
+				count--;
+			}
+		}
 	}
 }
 var model = {
@@ -22,7 +52,7 @@ var model = {
 			{locations: ["0","0","0"], hits:["","",""]},
 			{locations: ["0","0","0"], hits:["","",""]}],
 	fire: function(guess){
-		for(var i = 0; i < this.numShips; i++){
+		for(var i = 0; i < 3; i++){
 			var ship = this.ships[i];
 			var index = ship.locations.indexOf(guess);
 			if (index >= 0 ){
@@ -35,6 +65,9 @@ var model = {
 				view.displayMessage("HIT!");
 				if(this.isSunk(ship)){
 					view.displayMessage("You sank my battleship!");
+					this.getAuraShip(ship).forEach(function(item){
+						view.displayMiss(item);
+					});
 					this.shipsSunck++;
 				} 
 				return true;
@@ -84,13 +117,49 @@ var model = {
 	collision: function(location){ // Столкновение
 		for(var i = 0; i < this.numShips; i++){
 			var ship = this.ships[i];
+			var shipAura = this.getAuraShip(ship);
 			for(var j = 0; j < location.length; j++){
-				if(ship.locations.indexOf(location[j]) >= 0){
-					return true;
+				if(ship.locations.indexOf(location[j]) >= 0 || shipAura.indexOf(location[j]) >= 0){
+					return true;		
 				}
 			}
 		}
 		return false;
+	},
+	getAuraShip: function(ship){
+		var aura = [];
+		var add = function(addToRow, addToCol){
+			var newRow = row + addToRow;
+			var newCol = col + addToCol;
+			var newDot = newRow + ""  + newCol;
+			if(ship.locations.indexOf(newDot) < 0 && aura.indexOf(newDot) < 0){
+				if(newRow < model.boardSize && newCol < model.boardSize && newRow >= 0 && newCol >= 0){
+		 			aura.push(newDot);
+		 			return newDot;
+				}
+			}
+			return null;
+		};
+		for(var i = 0; i < this.shipLength; i++){
+			var location = ship.locations[i];
+			var row = Number(location.charAt(0));
+		 	var col = Number(location.charAt(1));
+		 	add(1,0);
+		 	add(0,1);
+		 	add(1,1);
+		 	add(1,-1);
+		 	add(-1,1);
+		 	add(-1,0);
+		 	add(0,-1);
+		 	add(-1,-1);
+		}
+		return aura;
+	},
+	openAllField: function(){
+		var arrImage = document.getElementsByTagName("td");
+		for(var i = 0; i < arrImage.length; i++){
+			arrImage[i].click();
+		}
 	}
 }
 var controller = {
@@ -107,12 +176,10 @@ var controller = {
 		}
 	},
 	parseGuess: function(guess){
-		var alphabet = ["A","B","C","D","E","F","G"];
 		if(guess === null || guess.length !== 2){
 			alert("Ooops, please enter a letter and number on the board!");
 		} else {
-			var fistChar = guess.charAt(0);
-			var row = alphabet.indexOf(fistChar);
+			var row  = guess.charAt(0)
 			var column = guess.charAt(1);
 			if(isNaN(row) || isNaN(column)){
 				alert("Ooops, that isn't on the board.");
@@ -126,23 +193,16 @@ var controller = {
 	}
 } 
 function init(){
-	var fireButton = document.getElementById("fireButton");
-	fireButton.onclick = handleFireButton;
-	var guessInput = document.getElementById("guessInput");
-	guessInput.onkeypress = handleKeyPress;
+	var arrImage = document.getElementsByTagName("td");
+	for(var i = 0; i < arrImage.length; i++){
+		arrImage[i].onclick = function(eventObj){
+			var selectField = eventObj.target;
+			var guess = selectField.id;
+			controller.processGuess(guess);
+		};
+	}	
 	model.generateShiplocation();
-}
-function handleFireButton(){
-	var guessInput = document.getElementById("guessInput");
-	var guess = guessInput.value;
-	controller.processGuess(guess);
-	guessInput.value = "";
-}
-function handleKeyPress(e){
-	var fireButton = document.getElementById("fireButton");
-	if(e.keyCode === 13){
-		fireButton.click();
-		return false;
-	}
+	view.msgCounter = view.makeCounter();
+//	model.openAllField();
 }
 window.onload = init;
